@@ -1,0 +1,172 @@
+# Portal Inmobiliario CSS Selectors
+#
+# Portal Inmobiliario runs on MercadoLibre's platform (andes design system).
+# All selectors use CSS syntax as consumed by selectolax / Playwright.
+#
+# MAINTENANCE: When the site updates its markup, update selectors here only.
+# The selector key names are stable; only the CSS values change.
+#
+# Selector groups support a list for fallback chains — the parser tries each
+# selector in order and returns the first match.
+
+# ── Search / listing-results page ──────────────────────────────────────────────
+search:
+  # Top-level container of all listing cards
+  results_container:
+    - "ol.ui-search-layout"
+    - "ol.results-component"
+    - ".ui-search-results"
+
+  # Individual listing card element
+  listing_item:
+    - "li.ui-search-layout__item"
+    - ".ui-search-result"
+
+  # Link to the listing detail page (within a card)
+  listing_link:
+    - "a.ui-search-link"
+    - "a.ui-search-result__image"
+    - "h2.ui-search-item__title a"
+
+  # Listing title within a card
+  listing_title:
+    - "h2.ui-search-item__title"
+    - ".ui-search-item__title"
+
+  # Price block within a card
+  price_container:
+    - ".ui-search-price__second-line"
+    - ".ui-search-price"
+
+  price_fraction:
+    - ".price-tag-fraction"
+    - ".price-tag-amount"
+
+  price_symbol:
+    - ".price-tag-symbol"
+
+  # Location text within a card
+  location_text:
+    - ".ui-search-item__location"
+    - ".ui-search-item__group__element--location"
+
+  # Short attribute chips within a card (bedrooms, area, etc.)
+  attribute_items:
+    - ".ui-search-item__attributes li"
+    - ".ui-search-card-attributes__attribute"
+
+  # Total results count text
+  total_results:
+    - ".ui-search-search-result__quantity-results span"
+    - ".ui-search-search-result__quantity-results"
+
+  # Pagination — link to the NEXT page
+  next_page:
+    - ".andes-pagination__button--next a"
+    - "a[title='Siguiente']"
+
+  # Pagination — current page indicator
+  current_page:
+    - ".andes-pagination__button--current"
+
+# ── Detail / VIP page ─────────────────────────────────────────────────────────
+detail:
+  # Main listing title
+  title:
+    - "h1.ui-pdp-title"
+    - ".ui-pdp-header__title-container h1"
+
+  # Price block
+  price_container:
+    - ".ui-pdp-price__second-line"
+    - ".ui-pdp-price"
+
+  price_fraction:
+    - ".price-tag-fraction"
+    - ".price-tag-amount"
+
+  price_symbol:
+    - ".price-tag-symbol"
+
+  # Maintenance fee / gastos comunes row
+  maintenance_fee_row:
+    - ".ui-pdp-container__row--maintenance-fee-vis"
+    - "[class*='maintenance-fee']"
+
+  # Highlighted specs icons (size, rooms, bathrooms, parking)
+  highlighted_specs:
+    - ".ui-pdp-highlighted-specs-res__icon-label"
+    - ".ui-pdp-highlighted-specs__icon-label"
+
+  # Full attributes / specs table
+  attributes_table:
+    - ".ui-vpp-highlighted-specs__attribute-columns-row"
+    - ".ui-pdp-specs__table tr"
+    - ".ui-pdp-specs__table .andes-table__row"
+
+  # Single attribute within specs table
+  attribute_label:
+    - "th.andes-table__header--left"
+    - ".andes-table__header"
+
+  attribute_value:
+    - "td.andes-table__column--value"
+    - ".andes-table__column"
+
+  # Property description
+  description:
+    - ".ui-pdp-description__content p"
+    - ".ui-pdp-description p"
+    - "#description p"
+
+  # Location / address block
+  # Confirmed on live site 2026-03: address is in a <p> with BLACK+SMALL classes
+  location_address:
+    - ".ui-vip-location p.ui-pdp-media__title"
+    - ".ui-vip-location p"
+    - ".ui-pdp-media__body .ui-pdp-media__title"
+    - ".ui-pdp-location .ui-pdp-media__title"
+
+  # Seller name
+  seller_name:
+    - ".ui-vip-profile-info__link-name"
+    - ".ui-pdp-seller__name"
+    - ".ui-vip-profile-info__info-link"
+
+  # Seller type indicator
+  seller_badge:
+    - ".ui-pdp-seller__type"
+    - ".ui-vip-profile-info__badge"
+
+  # Publication / listing subtitle (e.g. "Inmobiliaria")
+  subtitle:
+    - ".ui-pdp-header__subtitle"
+
+  # Date published (relative text or <time> element)
+  published_date:
+    - "time[datetime]"
+    - "p.ui-pdp-color--GRAY.ui-pdp-size--XSMALL"
+    - "[class*='ui-pdp-color--GRAY'][class*='ui-pdp-size--XSMALL']"
+
+  # Image gallery
+  images:
+    - ".ui-pdp-gallery figure img"
+    - ".ui-pdp-image"
+    - ".ui-pdp-gallery .ui-pdp-gallery__figure img"
+
+  # Agency / project name
+  agency_name:
+    - ".ui-vip-profile-info__company-name"
+    - ".ui-pdp-seller__company"
+
+# ── Structured data extraction ────────────────────────────────────────────────
+structured:
+  # JSON-LD script tags
+  json_ld: "script[type='application/ld+json']"
+
+  # Common window-level state objects (extracted via JS evaluation)
+  window_state_keys:
+    - "__INITIAL_STATE__"
+    - "initialState"
+    - "serverState"
+    - "APP_STATE"

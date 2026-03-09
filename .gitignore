@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Environment
+.env
+*.env.local
+
+# Data (keep directory structure, ignore content)
+data/raw/
+data/interim/
+data/processed/
+data/exports/
+data/logs/
+data/scraper.db
+data/scraper.db-shm
+data/scraper.db-wal
+!data/.gitkeep
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!data/exports/.gitkeep
+!data/logs/.gitkeep
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Playwright
+playwright-report/
+
+# Mypy
+.mypy_cache/
+
+# Ruff
+.ruff_cache/

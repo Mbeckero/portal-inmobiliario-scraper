@@ -1,0 +1,33 @@
+services:
+  scraper:
+    build: .
+    image: portal-inmobiliario-scraper
+    container_name: pi_scraper
+    volumes:
+      # Persist data between runs
+      - ./data:/app/data
+      # Mount env file
+      - ./.env:/app/.env:ro
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///data/scraper.db
+      - HEADLESS=true
+      - LOG_LEVEL=INFO
+    # Override default command to run a sample scrape:
+    # docker compose run --rm scraper scrape-all --search-url "..." --max-pages 2
+    command: ["--help"]
+
+  # Scheduled daily runner
+  scheduler:
+    build: .
+    image: portal-inmobiliario-scraper
+    container_name: pi_scheduler
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///data/scraper.db
+      - HEADLESS=true
+    command: ["python", "-m", "src.scheduler"]
+    restart: unless-stopped
+    profiles:
+      - scheduler   # Only start with: docker compose --profile scheduler up

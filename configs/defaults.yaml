@@ -1,0 +1,108 @@
+# Default configuration values for Portal Inmobiliario Scraper
+# These can be overridden by environment variables or CLI flags.
+
+portal_inmobiliario:
+  base_url: "https://www.portalinmobiliario.com"
+  items_per_page: 48        # Portal PI returns 48 results per page
+  page_offset_param: "_Desde_{offset}"   # offset = (page-1) * 48 + 1
+
+  # Supported operation types
+  operations:
+    sale: "venta"
+    rent: "arriendo"
+
+  # Supported property types
+  property_types:
+    apartment: "departamento"
+    house: "casa"
+    land: "terreno"
+    office: "oficina"
+    commercial: "local-comercial"
+    warehouse: "bodega"
+    parking: "estacionamiento"
+
+  # Sort order keys
+  sort_options:
+    relevance: "RELEVANCE"
+    price_asc: "PRICE"
+    price_desc: "PRICE_DESC"
+    newest: "RECENTLY_UPDATED"
+
+  # Common Chilean communes and their slugs (extend as needed)
+  communes:
+    "Las Condes": "las-condes-metropolitana"
+    "Providencia": "providencia-metropolitana"
+    "Vitacura": "vitacura-metropolitana"
+    "Santiago": "santiago-metropolitana"
+    "Ñuñoa": "nunoa-metropolitana"
+    "Miraflores": "miraflores-metropolitana"
+    "La Reina": "la-reina-metropolitana"
+    "Lo Barnechea": "lo-barnechea-metropolitana"
+    "Viña del Mar": "vina-del-mar-valparaiso"
+    "Valparaíso": "valparaiso-valparaiso"
+    "Concepción": "concepcion-biobio"
+    "Temuco": "temuco-araucania"
+    "Puerto Montt": "puerto-montt-los-lagos"
+    "Antofagasta": "antofagasta-antofagasta"
+    "La Serena": "la-serena-coquimbo"
+
+# Normalization
+normalization:
+  # Known Chilean regions (official names → normalized)
+  regions:
+    "Región Metropolitana": "Metropolitana"
+    "Región de Valparaíso": "Valparaíso"
+    "Región del Biobío": "Biobío"
+    "Región de La Araucanía": "Araucanía"
+    "Región de Los Lagos": "Los Lagos"
+    "Región de Coquimbo": "Coquimbo"
+    "Región de Antofagasta": "Antofagasta"
+    "Región del Maule": "Maule"
+    "Región de O'Higgins": "O'Higgins"
+    "Región de Aysén": "Aysén"
+    "Región de Magallanes": "Magallanes"
+    "Región de Atacama": "Atacama"
+    "Región de Tarapacá": "Tarapacá"
+    "Región de Arica y Parinacota": "Arica y Parinacota"
+    "Región de Los Ríos": "Los Ríos"
+    "Región de Ñuble": "Ñuble"
+
+  # Currency symbols
+  currencies:
+    "$": "CLP"
+    "UF": "UF"
+    "CLF": "UF"
+    "US$": "USD"
+    "USD": "USD"
+
+  # Area unit patterns and their multipliers to convert to m²
+  area_units:
+    "m2": 1.0
+    "m²": 1.0
+    "mt2": 1.0
+    "mts2": 1.0
+    "ha": 10000.0
+
+# Scheduling
+scheduler:
+  daily_run_hour: 6       # 06:00 local time
+  daily_run_minute: 0
+  output_date_format: "%Y-%m-%d"
+
+# Fingerprint fields — used for deduplication
+deduplication:
+  fingerprint_fields:
+    - "listing_id"
+    - "listing_url"
+    - "price"
+    - "bedrooms"
+    - "usable_area_m2"
+    - "commune"
+
+  # Fields that trigger a "changed" record when they differ
+  change_tracking_fields:
+    - "price"
+    - "price_clp"
+    - "price_uf"
+    - "is_active"
+    - "maintenance_fee"
