@@ -563,5 +563,19 @@ def _new_run_id() -> str:
     return f"{ts}_{short_id}"
 
 
+# ── web ───────────────────────────────────────────────────────────────────────
+
+@app.command("web")
+def cmd_web(
+    host: str = typer.Option("127.0.0.1", "--host", help="Bind host"),
+    port: int = typer.Option(8080, "--port", help="Bind port"),
+    reload: bool = typer.Option(False, "--reload/--no-reload", help="Auto-reload on code changes"),
+) -> None:
+    """Start the web UI (http://localhost:8080)."""
+    import uvicorn
+    console.print(f"[green]Starting web UI at[/green] http://{host}:{port}")
+    uvicorn.run("src.web:app", host=host, port=port, reload=reload)
+
+
 if __name__ == "__main__":
     app()

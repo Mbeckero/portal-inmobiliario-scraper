@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portal Inmobiliario Scraper</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 52px;
+    }
+    header h1 { font-size: 16px; font-weight: 600; }
+    header .badge {
+      background: #eff6ff;
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      border: 1px solid #bfdbfe;
+    }
+    #status-pill {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    #status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #94a3b8;
+    }
+    #status-dot.running { background: var(--warning); animation: pulse 1s infinite; }
+    #status-dot.idle    { background: #94a3b8; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── Nav tabs ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      gap: 0;
+    }
+    nav button {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    nav button:hover { color: var(--text); }
+    nav button.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* ── Layout ── */
+    main { padding: 24px; max-width: 1200px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 16px;
+    }
+
+    /* ── Grid ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* ── Form elements ── */
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+
+    input[type="text"], input[type="number"], input[type="url"],
+    select, textarea {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--surface);
+      width: 100%;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+
+    /* Toggle switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+    .toggle-row label { font-size: 13px; font-weight: 500; }
+    .toggle-row .sub  { font-size: 11px; color: var(--text-muted); }
+    .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0;
+      background: #cbd5e1;
+      border-radius: 99px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 14px; height: 14px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform .2s;
+    }
+    .switch input:checked + .slider { background: var(--primary); }
+    .switch input:checked + .slider::before { transform: translateX(16px); }
+
+    /* Range input */
+    .range-row { display: flex; align-items: center; gap: 8px; }
+    .range-row input[type="range"] { flex: 1; }
+    .range-val { font-size: 12px; color: var(--text-muted); min-width: 32px; text-align: right; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px; font-weight: 500;
+      border: none; cursor: pointer;
+      transition: background .15s, opacity .15s;
+    }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary  { background: var(--primary); color: white; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-danger   { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+    .btn-danger:hover:not(:disabled) { background: #fee2e2; }
+    .btn-ghost    { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { background: var(--border); }
+
+    /* ── Status badges ── */
+    .badge-status {
+      display: inline-block;
+      padding: 2px 8px; border-radius: 99px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-running   { background: #fef3c7; color: #92400e; }
+    .badge-completed { background: #dcfce7; color: #166534; }
+    .badge-failed    { background: #fee2e2; color: #991b1b; }
+    .badge-partial   { background: #fff7ed; color: #9a3412; }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      text-align: left; padding: 8px 12px;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+    .td-mono { font-family: "SF Mono", "Fira Code", monospace; font-size: 12px; color: var(--text-muted); }
+
+    /* ── Progress card ── */
+    #run-progress {
+      display: none;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    #run-progress.visible { display: block; }
+    .progress-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .progress-header h3 { font-size: 14px; font-weight: 600; color: #1e40af; }
+    .stat-row { display: flex; gap: 20px; flex-wrap: wrap; }
+    .stat-item { display: flex; flex-direction: column; gap: 2px; }
+    .stat-item .val { font-size: 20px; font-weight: 700; color: #1e40af; }
+    .stat-item .lbl { font-size: 11px; color: #3b82f6; text-transform: uppercase; }
+
+    /* ── URL mode toggle ── */
+    .mode-tabs { display: flex; gap: 4px; margin-bottom: 14px; }
+    .mode-tab {
+      padding: 5px 12px; font-size: 12px; font-weight: 500;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: var(--bg); color: var(--text-muted); cursor: pointer;
+    }
+    .mode-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+    /* ── Price row ── */
+    .price-row { display: grid; grid-template-columns: 1fr 1fr 80px; gap: 8px; align-items: end; }
+
+    /* ── Separator ── */
+    .sep { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+    /* ── Alert ── */
+    .alert {
+      padding: 10px 14px; border-radius: 6px; font-size: 13px;
+      margin-bottom: 12px; display: none;
+    }
+    .alert.visible { display: block; }
+    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .alert-error   { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .alert-info    { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; align-items: center; gap: 8px; padding-top: 12px; }
+    .pagination span { font-size: 12px; color: var(--text-muted); }
+
+    /* ── Settings form ── */
+    .settings-section { margin-bottom: 24px; }
+    .settings-section h3 { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+  <h1>Portal Inmobiliario Scraper</h1>
+  <span class="badge">Chile</span>
+  <div id="status-pill">
+    <div id="status-dot" class="idle"></div>
+    <span id="status-text">Idle</span>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="switchTab('run', this)">New Run</button>
+  <button onclick="switchTab('history', this)">History</button>
+  <button onclick="switchTab('listings', this)">Listings</button>
+  <button onclick="switchTab('export', this)">Export</button>
+  <button onclick="switchTab('settings', this)">Settings</button>
+</nav>
+
+<main>
+
+  <!-- ── New Run ── -->
+  <div id="tab-run" class="tab-content active">
+
+    <div id="run-progress">
+      <div class="progress-header">
+        <div id="status-dot-big" style="width:10px;height:10px;border-radius:50%;background:var(--warning);animation:pulse 1s infinite"></div>
+        <h3>Run in progress…</h3>
+        <span id="progress-run-id" class="td-mono"></span>
+      </div>
+      <div class="stat-row">
+        <div class="stat-item"><span class="val" id="p-discovered">—</span><span class="lbl">Discovered</span></div>
+        <div class="stat-item"><span class="val" id="p-scraped">—</span><span class="lbl">Scraped</span></div>
+        <div class="stat-item"><span class="val" id="p-new">—</span><span class="lbl">New</span></div>
+        <div class="stat-item"><span class="val" id="p-changed">—</span><span class="lbl">Changed</span></div>
+        <div class="stat-item"><span class="val" id="p-failed">—</span><span class="lbl">Failed</span></div>
+      </div>
+    </div>
+
+    <div id="run-alert" class="alert"></div>
+
+    <div class="grid-2" style="align-items: start;">
+
+      <!-- Left: Search config -->
+      <div class="card">
+        <div class="card-title">Search Configuration</div>
+
+        <div class="mode-tabs">
+          <button class="mode-tab active" id="mode-builder" onclick="setMode('builder')">Builder</button>
+          <button class="mode-tab" id="mode-url" onclick="setMode('url')">Direct URL</button>
+        </div>
+
+        <div id="builder-fields">
+          <div class="grid-2" style="margin-bottom:12px">
+            <div class="field">
+              <label>Operation</label>
+              <select id="operation_type">
+                <option value="sale">Sale (Venta)</option>
+                <option value="rent">Rent (Arriendo)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Property Type</label>
+              <select id="property_type"></select>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:12px">
+            <label>Commune</label>
+            <select id="commune"></select>
+          </div>
+          <div class="field" style="margin-bottom:12px">
+            <label>Sort Order</label>
+            <select id="sort">
+              <option value="">Default (Relevance)</option>
+            </select>
+          </div>
+          <div class="price-row" style="margin-bottom:4px">
+            <div class="field">
+              <label>Min Price</label>
+              <input type="number" id="price_min" placeholder="e.g. 2000" min="0" />
+            </div>
+            <div class="field">
+              <label>Max Price</label>
+              <input type="number" id="price_max" placeholder="e.g. 8000" min="0" />
+            </div>
+            <div class="field">
+              <label>Unit</label>
+              <select id="price_unit">
+                <option value="CLF">UF</option>
+                <option value="CLP">CLP</option>
+              </select>
+            </div>
+          </div>
+          <div id="url-preview" style="margin-top:10px;padding:8px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--text-muted);word-break:break-all;display:none;"></div>
+        </div>
+
+        <div id="url-field" style="display:none">
+          <div class="field">
+            <label>Search URL</label>
+            <input type="url" id="search_url" placeholder="https://www.portalinmobiliario.com/venta/departamento/las-condes-metropolitana" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Run options -->
+      <div>
+        <div class="card">
+          <div class="card-title">Run Options</div>
+          <div class="grid-2" style="margin-bottom:12px">
+            <div class="field">
+              <label>Max Pages</label>
+              <input type="number" id="max_pages" value="10" min="1" max="200" />
+            </div>
+            <div class="field">
+              <label>Max Listings</label>
+              <input type="number" id="max_listings" value="200" min="1" max="5000" />
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:12px">
+            <label>Min Delay (s)</label>
+            <div class="range-row">
+              <input type="range" id="min_delay" min="0.5" max="10" step="0.5" value="2.5" oninput="document.getElementById('min_delay_val').textContent=this.value" />
+              <span class="range-val" id="min_delay_val">2.5</span>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:16px">
+            <label>Max Delay (s)</label>
+            <div class="range-row">
+              <input type="range" id="max_delay" min="1" max="20" step="0.5" value="6" oninput="document.getElementById('max_delay_val').textContent=this.value" />
+              <span class="range-val" id="max_delay_val">6</span>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <label>Headless Browser</label>
+              <div class="sub">Hide the browser window</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="headless" checked /><span class="slider"></span></label>
+          </div>
+          <hr class="sep" />
+          <div class="toggle-row">
+            <div>
+              <label>Save Raw HTML</label>
+              <div class="sub">Archive original pages for debugging</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="save_raw" /><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-start" onclick="startRun()" style="width:100%;justify-content:center;padding:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          Start Scrape
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── History ── -->
+  <div id="tab-history" class="tab-content">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="card-title" style="margin:0">Run History</div>
+        <button class="btn btn-ghost" onclick="loadHistory()">Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>Run ID</th>
+              <th>Status</th>
+              <th>Started</th>
+              <th>Duration</th>
+              <th>Discovered</th>
+              <th>Scraped</th>
+              <th>New</th>
+              <th>Changed</th>
+              <th>Failed</th>
+              <th>Search URL</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:32px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Listings ── -->
+  <div id="tab-listings" class="tab-content">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="card-title" style="margin:0">Active Listings <span id="listings-count" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)"></span></div>
+        <button class="btn btn-ghost" onclick="loadListings(0)">Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table id="listings-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Price</th>
+              <th>Commune</th>
+              <th>Bedrooms</th>
+              <th>Area (m²)</th>
+              <th>Seller</th>
+              <th>First Seen</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody id="listings-body">
+            <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button class="btn btn-ghost" id="btn-prev" onclick="listingsPage(-1)" disabled>← Prev</button>
+        <span id="page-info">—</span>
+        <button class="btn btn-ghost" id="btn-next" onclick="listingsPage(1)">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Export ── -->
+  <div id="tab-export" class="tab-content">
+    <div class="card" style="max-width:480px">
+      <div class="card-title">Export Listings</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Export all active listings from the database to your configured output directory.</p>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="fmt-csv" checked /> CSV
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="fmt-json" checked /> JSON
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="fmt-parquet" /> Parquet
+        </label>
+      </div>
+
+      <button class="btn btn-primary" onclick="triggerExport()">Export</button>
+
+      <div id="export-result" class="alert" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- ── Settings ── -->
+  <div id="tab-settings" class="tab-content">
+    <div class="card" style="max-width:600px">
+      <div class="card-title">Global Settings</div>
+      <div id="settings-alert" class="alert" style="margin-bottom:16px"></div>
+
+      <div class="settings-section">
+        <h3>Browser</h3>
+        <div class="grid-2">
+          <div class="toggle-row" style="grid-column:1/-1">
+            <div><label>Headless</label><div class="sub">Run without visible browser window</div></div>
+            <label class="switch"><input type="checkbox" id="s-headless" /><span class="slider"></span></label>
+          </div>
+          <div class="field">
+            <label>Timeout (ms)</label>
+            <input type="number" id="s-browser_timeout" />
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Rate Limiting</h3>
+        <div class="grid-3">
+          <div class="field">
+            <label>Min Delay (s)</label>
+            <input type="number" id="s-min_delay" step="0.1" />
+          </div>
+          <div class="field">
+            <label>Max Delay (s)</label>
+            <input type="number" id="s-max_delay" step="0.1" />
+          </div>
+          <div class="field">
+            <label>Concurrency</label>
+            <input type="number" id="s-max_concurrency" min="1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Scraping Limits</h3>
+        <div class="grid-2">
+          <div class="field">
+            <label>Max Pages</label>
+            <input type="number" id="s-max_pages" min="1" />
+          </div>
+          <div class="field">
+            <label>Max Listings</label>
+            <input type="number" id="s-max_listings" min="1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Retry</h3>
+        <div class="grid-2">
+          <div class="field">
+            <label>Max Retries</label>
+            <input type="number" id="s-max_retries" min="0" />
+          </div>
+          <div class="field">
+            <label>Retry Backoff</label>
+            <input type="number" id="s-retry_backoff" step="0.1" min="1" />
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Storage &amp; Logging</h3>
+        <div class="grid-2" style="margin-bottom:12px">
+          <div class="field">
+            <label>Log Level</label>
+            <select id="s-log_level">
+              <option>DEBUG</option><option>INFO</option>
+              <option>WARNING</option><option>ERROR</option>
+            </select>
+          </div>
+          <div class="toggle-row">
+            <div><label>Save Raw HTML</label></div>
+            <label class="switch"><input type="checkbox" id="s-save_raw" /><span class="slider"></span></label>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:12px">
+          <label>Database URL</label>
+          <input type="text" id="s-database_url" />
+        </div>
+        <div class="field">
+          <label>Output Directory</label>
+          <input type="text" id="s-output_dir" />
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveSettings()">Save to .env</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let urlMode = 'builder';
+  let defaults = {};
+  let listingsOffset = 0;
+  let listingsTotal = 0;
+  const PAGE_SIZE = 50;
+  let pollTimer = null;
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  async function init() {
+    await Promise.all([loadDefaults(), checkStatus()]);
+    buildPreview();
+    loadSettings();
+  }
+
+  async function loadDefaults() {
+    const res = await fetch('/api/defaults');
+    defaults = await res.json();
+
+    const ptSel = document.getElementById('property_type');
+    defaults.property_types.forEach(pt => {
+      ptSel.add(new Option(pt.charAt(0).toUpperCase() + pt.slice(1), pt));
+    });
+
+    const cSel = document.getElementById('commune');
+    defaults.communes.forEach(c => cSel.add(new Option(c, c)));
+
+    const sSel = document.getElementById('sort');
+    defaults.sort_options.forEach(s => sSel.add(new Option(s, s)));
+  }
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'history') loadHistory();
+    if (name === 'listings') loadListings(0);
+    if (name === 'settings') loadSettings();
+  }
+
+  // ── URL mode toggle ────────────────────────────────────────────────────────
+  function setMode(mode) {
+    urlMode = mode;
+    document.getElementById('builder-fields').style.display = mode === 'builder' ? '' : 'none';
+    document.getElementById('url-field').style.display = mode === 'url' ? '' : 'none';
+    document.getElementById('mode-builder').classList.toggle('active', mode === 'builder');
+    document.getElementById('mode-url').classList.toggle('active', mode === 'url');
+  }
+
+  // ── URL preview ────────────────────────────────────────────────────────────
+  function buildPreview() {
+    const commune = document.getElementById('commune').value;
+    if (!commune) { document.getElementById('url-preview').style.display = 'none'; return; }
+    const op = document.getElementById('operation_type').value;
+    const pt = document.getElementById('property_type').value;
+    const opMap = { sale: 'venta', rent: 'arriendo' };
+    const ptMap = { apartment: 'departamento', house: 'casa', land: 'terreno', office: 'oficina', commercial: 'local-comercial', warehouse: 'bodega', parking: 'estacionamiento' };
+    const commMap = {};
+    // defaults.communes is list of names; the slug mapping is server-side
+    const el = document.getElementById('url-preview');
+    el.style.display = '';
+    el.textContent = `https://www.portalinmobiliario.com/${opMap[op]||op}/${ptMap[pt]||pt}/[${commune.toLowerCase().replace(/\s/g,'-')}]`;
+  }
+
+  ['operation_type','property_type','commune','sort','price_min','price_max','price_unit'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', buildPreview);
+  });
+
+  // ── Start run ──────────────────────────────────────────────────────────────
+  async function startRun() {
+    const btn = document.getElementById('btn-start');
+    const alertEl = document.getElementById('run-alert');
+    showAlert(alertEl, '', '');
+
+    const payload = {
+      max_pages: +document.getElementById('max_pages').value,
+      max_listings: +document.getElementById('max_listings').value,
+      min_delay: +document.getElementById('min_delay').value,
+      max_delay: +document.getElementById('max_delay').value,
+      headless: document.getElementById('headless').checked,
+      save_raw: document.getElementById('save_raw').checked,
+    };
+
+    if (urlMode === 'url') {
+      const u = document.getElementById('search_url').value.trim();
+      if (!u) return showAlert(alertEl, 'error', 'Enter a search URL.');
+      payload.search_url = u;
+    } else {
+      const commune = document.getElementById('commune').value;
+      if (!commune) return showAlert(alertEl, 'error', 'Select a commune.');
+      payload.commune = commune;
+      payload.operation_type = document.getElementById('operation_type').value;
+      payload.property_type = document.getElementById('property_type').value;
+      const sort = document.getElementById('sort').value;
+      if (sort) payload.sort = sort;
+      const pmin = document.getElementById('price_min').value;
+      const pmax = document.getElementById('price_max').value;
+      if (pmin) payload.price_min = +pmin;
+      if (pmax) payload.price_max = +pmax;
+      payload.price_unit = document.getElementById('price_unit').value;
+    }
+
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok) {
+        showAlert(alertEl, 'error', data.detail || 'Failed to start run.');
+        btn.disabled = false;
+        return;
+      }
+      showAlert(alertEl, 'info', 'Run started. Monitoring progress…');
+      startPolling();
+    } catch (e) {
+      showAlert(alertEl, 'error', 'Network error: ' + e.message);
+      btn.disabled = false;
+    }
+  }
+
+  // ── Polling ────────────────────────────────────────────────────────────────
+  async function checkStatus() {
+    const res = await fetch('/api/status');
+    const { running, error } = await res.json();
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('status-text');
+
+    if (running) {
+      dot.className = 'running';
+      txt.textContent = 'Running';
+      document.getElementById('run-progress').classList.add('visible');
+      document.getElementById('btn-start').disabled = true;
+    } else {
+      dot.className = 'idle';
+      txt.textContent = error ? 'Error' : 'Idle';
+      document.getElementById('run-progress').classList.remove('visible');
+      document.getElementById('btn-start').disabled = false;
+    }
+    return running;
+  }
+
+  async function pollRunProgress() {
+    const running = await checkStatus();
+    if (!running) {
+      stopPolling();
+      const alertEl = document.getElementById('run-alert');
+      showAlert(alertEl, 'success', 'Run complete. Check History tab for results.');
+      return;
+    }
+    // Get latest run stats
+    const res = await fetch('/api/runs');
+    const runs = await res.json();
+    if (runs.length) {
+      const r = runs[0];
+      document.getElementById('progress-run-id').textContent = r.run_id;
+      document.getElementById('p-discovered').textContent = r.number_discovered ?? '—';
+      document.getElementById('p-scraped').textContent = r.number_scraped ?? '—';
+      document.getElementById('p-new').textContent = r.number_new ?? '—';
+      document.getElementById('p-changed').textContent = r.number_changed ?? '—';
+      document.getElementById('p-failed').textContent = r.number_failed ?? '—';
+    }
+  }
+
+  function startPolling() {
+    stopPolling();
+    pollRunProgress();
+    pollTimer = setInterval(pollRunProgress, 4000);
+  }
+
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  // ── History ────────────────────────────────────────────────────────────────
+  async function loadHistory() {
+    const res = await fetch('/api/runs');
+    const runs = await res.json();
+    const tbody = document.getElementById('history-body');
+
+    if (!runs.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:32px">No runs yet.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = runs.map(r => {
+      const dur = r.started_at && r.finished_at
+        ? fmtDuration(new Date(r.finished_at) - new Date(r.started_at))
+        : r.status === 'running' ? 'Running…' : '—';
+      const urls = (r.search_urls || []).map(u => `<a href="${u}" target="_blank" style="color:var(--primary);word-break:break-all">${u.replace('https://www.portalinmobiliario.com','').slice(0,60)}…</a>`).join('<br/>');
+      return `<tr>
+        <td class="td-mono">${r.run_id}</td>
+        <td><span class="badge-status badge-${r.status}">${r.status}</span></td>
+        <td>${r.started_at ? fmtDate(r.started_at) : '—'}</td>
+        <td>${dur}</td>
+        <td>${r.number_discovered}</td>
+        <td>${r.number_scraped}</td>
+        <td style="color:var(--success);font-weight:600">${r.number_new}</td>
+        <td>${r.number_changed}</td>
+        <td style="color:${r.number_failed ? 'var(--danger)' : 'inherit'}">${r.number_failed}</td>
+        <td style="max-width:280px">${urls || '—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Listings ───────────────────────────────────────────────────────────────
+  async function loadListings(offset) {
+    listingsOffset = offset;
+    const res = await fetch(`/api/listings?limit=${PAGE_SIZE}&offset=${offset}`);
+    const data = await res.json();
+    listingsTotal = data.total;
+
+    document.getElementById('listings-count').textContent = `— ${data.total.toLocaleString()} total`;
+
+    const tbody = document.getElementById('listings-body');
+    if (!data.items.length) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">No listings in database.</td></tr>';
+    } else {
+      tbody.innerHTML = data.items.map(l => `<tr>
+        <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(l.title||'')}">${esc(l.title || '—')}</td>
+        <td>${l.property_type || '—'}</td>
+        <td style="white-space:nowrap">${l.currency ? `${l.currency} ${(l.price||0).toLocaleString()}` : '—'}</td>
+        <td>${l.commune || '—'}</td>
+        <td style="text-align:center">${l.bedrooms ?? '—'}</td>
+        <td style="text-align:center">${l.usable_area_m2 ? l.usable_area_m2.toFixed(1) : '—'}</td>
+        <td>${l.seller_type || '—'}</td>
+        <td>${l.first_seen_at ? fmtDate(l.first_seen_at) : '—'}</td>
+        <td><a href="${l.listing_url}" target="_blank" style="color:var(--primary)">↗</a></td>
+      </tr>`).join('');
+    }
+
+    const page = Math.floor(offset / PAGE_SIZE) + 1;
+    const pages = Math.ceil(listingsTotal / PAGE_SIZE) || 1;
+    document.getElementById('page-info').textContent = `Page ${page} of ${pages}`;
+    document.getElementById('btn-prev').disabled = offset === 0;
+    document.getElementById('btn-next').disabled = offset + PAGE_SIZE >= listingsTotal;
+  }
+
+  function listingsPage(dir) {
+    const newOffset = listingsOffset + dir * PAGE_SIZE;
+    if (newOffset < 0 || newOffset >= listingsTotal) return;
+    loadListings(newOffset);
+  }
+
+  // ── Export ─────────────────────────────────────────────────────────────────
+  async function triggerExport() {
+    const formats = [];
+    if (document.getElementById('fmt-csv').checked) formats.push('csv');
+    if (document.getElementById('fmt-json').checked) formats.push('json');
+    if (document.getElementById('fmt-parquet').checked) formats.push('parquet');
+    if (!formats.length) return showAlert(document.getElementById('export-result'), 'error', 'Select at least one format.');
+
+    const res = await fetch('/api/export', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({formats}) });
+    const data = await res.json();
+    const el = document.getElementById('export-result');
+    if (data.ok) {
+      const paths = Object.entries(data.exported).map(([fmt,p]) => `${fmt.toUpperCase()}: ${p}`).join('\n');
+      showAlert(el, 'success', `Exported ${data.count} listings:\n${paths}`);
+    } else {
+      showAlert(el, 'error', data.message || 'Export failed.');
+    }
+  }
+
+  // ── Settings ───────────────────────────────────────────────────────────────
+  async function loadSettings() {
+    const res = await fetch('/api/settings');
+    const s = await res.json();
+    document.getElementById('s-headless').checked = s.headless;
+    document.getElementById('s-browser_timeout').value = s.browser_timeout;
+    document.getElementById('s-min_delay').value = s.min_delay;
+    document.getElementById('s-max_delay').value = s.max_delay;
+    document.getElementById('s-max_concurrency').value = s.max_concurrency;
+    document.getElementById('s-max_pages').value = s.max_pages;
+    document.getElementById('s-max_listings').value = s.max_listings;
+    document.getElementById('s-save_raw').checked = s.save_raw;
+    document.getElementById('s-max_retries').value = s.max_retries;
+    document.getElementById('s-retry_backoff').value = s.retry_backoff;
+    document.getElementById('s-log_level').value = s.log_level;
+    document.getElementById('s-database_url').value = s.database_url;
+    document.getElementById('s-output_dir').value = s.output_dir;
+  }
+
+  async function saveSettings() {
+    const payload = {
+      headless: document.getElementById('s-headless').checked,
+      browser_timeout: +document.getElementById('s-browser_timeout').value,
+      min_delay: +document.getElementById('s-min_delay').value,
+      max_delay: +document.getElementById('s-max_delay').value,
+      max_concurrency: +document.getElementById('s-max_concurrency').value,
+      max_pages: +document.getElementById('s-max_pages').value,
+      max_listings: +document.getElementById('s-max_listings').value,
+      save_raw: document.getElementById('s-save_raw').checked,
+      max_retries: +document.getElementById('s-max_retries').value,
+      retry_backoff: +document.getElementById('s-retry_backoff').value,
+      log_level: document.getElementById('s-log_level').value,
+      database_url: document.getElementById('s-database_url').value,
+      output_dir: document.getElementById('s-output_dir').value,
+    };
+    const res = await fetch('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const el = document.getElementById('settings-alert');
+    if (res.ok) showAlert(el, 'success', 'Settings saved to .env');
+    else showAlert(el, 'error', 'Failed to save settings.');
+  }
+
+  // ── Utils ──────────────────────────────────────────────────────────────────
+  function showAlert(el, type, msg) {
+    el.className = `alert${type ? ' alert-'+type : ''} ${msg ? 'visible' : ''}`;
+    el.textContent = msg;
+  }
+
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }
+
+  function fmtDuration(ms) {
+    const s = Math.floor(ms / 1000);
+    if (s < 60) return s + 's';
+    const m = Math.floor(s / 60);
+    return m + 'm ' + (s % 60) + 's';
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  init();
+</script>
+</body>
+</html>
